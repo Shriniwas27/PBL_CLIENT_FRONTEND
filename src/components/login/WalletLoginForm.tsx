@@ -35,6 +35,22 @@ const WalletLoginForm = () => {
       checkIfWalletIsConnected();
     }
     
+    // Set up event listeners
+    const handleAccountsChanged = (accounts: string[]) => {
+      if (accounts.length === 0) {
+        // User disconnected their wallet
+        setWalletConnected(false);
+        setWalletAddress('');
+        toast.error('Wallet disconnected');
+      } else {
+        setWalletAddress(formatAddress(accounts[0]));
+      }
+    };
+    
+    if (window.ethereum) {
+      window.ethereum.on('accountsChanged', handleAccountsChanged);
+    }
+    
     return () => {
       // Clean up event listeners
       if (window.ethereum) {
@@ -52,9 +68,6 @@ const WalletLoginForm = () => {
         setWalletConnected(true);
         setWalletAddress(formatAddress(accounts[0]));
       }
-      
-      // Listen for account changes
-      window.ethereum!.on('accountsChanged', handleAccountsChanged);
     } catch (error) {
       console.error("Error checking wallet connection:", error);
     }

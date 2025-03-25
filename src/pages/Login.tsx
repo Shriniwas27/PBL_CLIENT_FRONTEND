@@ -33,18 +33,18 @@ const Login = () => {
               </CardHeader>
               
               <Tabs defaultValue="otp" className="w-full">
-                <TabsList className="grid w-full grid-cols-2 px-6">
+                <TabsList className="grid w-full grid-cols-2 mx-6">
                   <TabsTrigger value="otp">OTP Login</TabsTrigger>
                   <TabsTrigger value="wallet">MetaMask</TabsTrigger>
                 </TabsList>
                 
-                <TabsContent value="otp" className="mt-0">
+                <TabsContent value="otp">
                   <CardContent>
                     <OtpLoginForm />
                   </CardContent>
                 </TabsContent>
                 
-                <TabsContent value="wallet" className="mt-0">
+                <TabsContent value="wallet">
                   <CardContent>
                     <WalletLoginForm />
                   </CardContent>

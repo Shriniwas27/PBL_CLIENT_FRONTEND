@@ -10,7 +10,8 @@ import {
   Vote, 
   Users, 
   BarChart4, 
-  Check
+  Check,
+  Globe
 } from 'lucide-react';
 
 const Index = () => {

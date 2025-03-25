@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import Navbar from '@/components/Navbar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
@@ -33,20 +33,22 @@ const Login = () => {
               </CardHeader>
               
               <Tabs defaultValue="otp" className="w-full">
-                <TabsList className="grid w-full grid-cols-2">
+                <TabsList className="grid w-full grid-cols-2 px-6">
                   <TabsTrigger value="otp">OTP Login</TabsTrigger>
                   <TabsTrigger value="wallet">MetaMask</TabsTrigger>
                 </TabsList>
                 
-                <CardContent>
-                  <TabsContent value="otp" className="mt-0">
+                <TabsContent value="otp" className="mt-0">
+                  <CardContent>
                     <OtpLoginForm />
-                  </TabsContent>
-                  
-                  <TabsContent value="wallet" className="mt-0">
+                  </CardContent>
+                </TabsContent>
+                
+                <TabsContent value="wallet" className="mt-0">
+                  <CardContent>
                     <WalletLoginForm />
-                  </TabsContent>
-                </CardContent>
+                  </CardContent>
+                </TabsContent>
               </Tabs>
               
               <CardFooter className="flex-col gap-2">

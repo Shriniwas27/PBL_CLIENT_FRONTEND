@@ -15,8 +15,6 @@ import OtpLoginForm from '@/components/login/OtpLoginForm';
 import WalletLoginForm from '@/components/login/WalletLoginForm';
 
 const Login = () => {
-  const [loginMethod, setLoginMethod] = useState('otp');
-
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
@@ -30,23 +28,26 @@ const Login = () => {
             
             <Card className="glass-card">
               <CardHeader>
-                <Tabs defaultValue="otp" className="w-full" onValueChange={setLoginMethod}>
-                  <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="otp">OTP Login</TabsTrigger>
-                    <TabsTrigger value="wallet">MetaMask</TabsTrigger>
-                  </TabsList>
-                </Tabs>
+                <CardTitle>Login to Your Account</CardTitle>
+                <CardDescription>Choose your preferred login method</CardDescription>
               </CardHeader>
               
-              <CardContent>
-                <TabsContent value="otp" className="mt-0">
-                  <OtpLoginForm />
-                </TabsContent>
+              <Tabs defaultValue="otp" className="w-full">
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="otp">OTP Login</TabsTrigger>
+                  <TabsTrigger value="wallet">MetaMask</TabsTrigger>
+                </TabsList>
                 
-                <TabsContent value="wallet" className="mt-0">
-                  <WalletLoginForm />
-                </TabsContent>
-              </CardContent>
+                <CardContent>
+                  <TabsContent value="otp" className="mt-0">
+                    <OtpLoginForm />
+                  </TabsContent>
+                  
+                  <TabsContent value="wallet" className="mt-0">
+                    <WalletLoginForm />
+                  </TabsContent>
+                </CardContent>
+              </Tabs>
               
               <CardFooter className="flex-col gap-2">
                 <div className="w-full border-t border-border pt-4 text-center text-sm text-foreground/70">

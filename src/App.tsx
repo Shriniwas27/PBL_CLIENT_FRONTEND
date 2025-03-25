@@ -10,6 +10,7 @@ import Candidates from "./pages/Candidates";
 import Voting from "./pages/Voting";
 import Guidelines from "./pages/Guidelines";
 import VoterInfo from "./pages/VoterInfo";
+import Results from "./pages/Results";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -27,6 +28,7 @@ const App = () => (
           <Route path="/voting" element={<Voting />} />
           <Route path="/guidelines" element={<Guidelines />} />
           <Route path="/voter-info" element={<VoterInfo />} />
+          <Route path="/results" element={<Results />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

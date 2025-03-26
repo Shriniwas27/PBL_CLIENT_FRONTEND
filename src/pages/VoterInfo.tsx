@@ -19,8 +19,11 @@ import {
   HelpCircle
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useLanguage } from '@/components/LanguageSwitcher';
 
 const VoterInfo = () => {
+  const { currentLanguage } = useLanguage();
+  
   const voterDetails = {
     name: 'John Smith',
     voterId: 'ABC1234567',
@@ -66,6 +69,49 @@ const VoterInfo = () => {
     }
   ];
 
+  // Simple translations
+  const translations = {
+    en: {
+      voterProfile: "Voter Profile",
+      quickAccess: "Quick Access",
+      upcomingElections: "Upcoming Elections",
+      faq: "Frequently Asked Questions",
+      viewCandidates: "View Candidates",
+      goToVoting: "Go to Voting",
+      votingGuidelines: "Voting Guidelines",
+      submitComplaint: "Submit Complaint",
+      nextElection: "Next Election",
+      details: "Details"
+    },
+    es: {
+      voterProfile: "Perfil de Votante",
+      quickAccess: "Acceso Rápido",
+      upcomingElections: "Próximas Elecciones",
+      faq: "Preguntas Frecuentes",
+      viewCandidates: "Ver Candidatos",
+      goToVoting: "Ir a Votar",
+      votingGuidelines: "Pautas de Votación",
+      submitComplaint: "Enviar Queja",
+      nextElection: "Próxima Elección",
+      details: "Detalles"
+    },
+    fr: {
+      voterProfile: "Profil d'Électeur",
+      quickAccess: "Accès Rapide",
+      upcomingElections: "Élections à Venir",
+      faq: "Questions Fréquentes",
+      viewCandidates: "Voir les Candidats",
+      goToVoting: "Aller Voter",
+      votingGuidelines: "Directives de Vote",
+      submitComplaint: "Soumettre une Plainte",
+      nextElection: "Prochaine Élection",
+      details: "Détails"
+    }
+  };
+  
+  // Get translated text based on current language (fallback to English)
+  const t = translations[currentLanguage as keyof typeof translations] || translations.en;
+
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
@@ -90,7 +136,7 @@ const VoterInfo = () => {
               <CardHeader className="border-b border-border pb-4">
                 <CardTitle className="flex items-center">
                   <UserCheck className="h-5 w-5 mr-2 text-primary" />
-                  Voter Profile
+                  {t.voterProfile}
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-6">
@@ -142,19 +188,19 @@ const VoterInfo = () => {
                     <div className="flex flex-col gap-3 mt-auto">
                       <Button asChild>
                         <Link to="/candidates">
-                          View Candidates 
+                          {t.viewCandidates}
                           <ChevronRight className="ml-2 h-4 w-4" />
                         </Link>
                       </Button>
                       <Button variant="outline" asChild>
                         <Link to="/voting">
-                          Go to Voting
+                          {t.goToVoting}
                           <ChevronRight className="ml-2 h-4 w-4" />
                         </Link>
                       </Button>
                       <Button variant="ghost" asChild>
                         <Link to="/guidelines">
-                          Voting Guidelines
+                          {t.votingGuidelines}
                           <ChevronRight className="ml-2 h-4 w-4" />
                         </Link>
                       </Button>
@@ -169,7 +215,7 @@ const VoterInfo = () => {
               <CardHeader className="border-b border-border pb-4">
                 <CardTitle className="flex items-center">
                   <Info className="h-5 w-5 mr-2 text-primary" />
-                  Quick Access
+                  {t.quickAccess}
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-6">
@@ -177,13 +223,13 @@ const VoterInfo = () => {
                   <Button variant="outline" className="w-full justify-start" asChild>
                     <Link to="/candidates">
                       <Users className="mr-2 h-4 w-4 text-primary" />
-                      View Candidates
+                      {t.viewCandidates}
                     </Link>
                   </Button>
                   <Button variant="outline" className="w-full justify-start" asChild>
                     <Link to="/guidelines">
                       <FileText className="mr-2 h-4 w-4 text-primary" />
-                      Voting Guidelines
+                      {t.votingGuidelines}
                     </Link>
                   </Button>
                   <Button variant="outline" className="w-full justify-start" asChild>
@@ -195,14 +241,14 @@ const VoterInfo = () => {
                   <Button variant="outline" className="w-full justify-start" asChild>
                     <Link to="/complaints">
                       <AlertCircle className="mr-2 h-4 w-4 text-primary" />
-                      Submit Complaint
+                      {t.submitComplaint}
                     </Link>
                   </Button>
                   <Separator className="my-2" />
                   <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
                     <h3 className="flex items-center text-sm font-medium text-yellow-800 mb-2">
                       <Clock className="h-4 w-4 mr-1 text-yellow-600" />
-                      Next Election
+                      {t.nextElection}
                     </h3>
                     <p className="text-sm text-yellow-700">
                       {upcomingElections[0].name}
@@ -221,7 +267,7 @@ const VoterInfo = () => {
             <CardHeader className="border-b border-border pb-4">
               <CardTitle className="flex items-center">
                 <Calendar className="h-5 w-5 mr-2 text-primary" />
-                Upcoming Elections
+                {t.upcomingElections}
               </CardTitle>
             </CardHeader>
             <CardContent className="p-6">
@@ -243,7 +289,7 @@ const VoterInfo = () => {
                       <TableCell className="text-right">
                         <Button variant="ghost" size="sm" asChild>
                           <Link to="/guidelines">
-                            Details
+                            {t.details}
                             <ChevronRight className="ml-1 h-4 w-4" />
                           </Link>
                         </Button>
@@ -260,7 +306,7 @@ const VoterInfo = () => {
             <CardHeader className="border-b border-border pb-4">
               <CardTitle className="flex items-center">
                 <HelpCircle className="h-5 w-5 mr-2 text-primary" />
-                Frequently Asked Questions
+                {t.faq}
               </CardTitle>
             </CardHeader>
             <CardContent className="p-6">

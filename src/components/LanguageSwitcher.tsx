@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { createContext, useContext, useState } from 'react';
 import { Globe } from 'lucide-react';
 import {
   DropdownMenu,
@@ -19,10 +19,19 @@ const languages = [
   { code: 'zh', name: '中文' },
 ];
 
-const LanguageSwitcher = () => {
-  const [currentLanguage, setCurrentLanguage] = React.useState('en');
+// Create a language context
+type LanguageContextType = {
+  currentLanguage: string;
+  setLanguage: (code: string) => void;
+  getCurrentLanguageName: () => string;
+};
 
-  const handleLanguageChange = (langCode: string) => {
+const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
+
+export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [currentLanguage, setCurrentLanguage] = useState('en');
+
+  const setLanguage = (langCode: string) => {
     setCurrentLanguage(langCode);
     // In a real implementation, this would change the app's language
     console.log(`Language changed to: ${langCode}`);
@@ -30,6 +39,28 @@ const LanguageSwitcher = () => {
 
   const getCurrentLanguageName = () => {
     return languages.find(lang => lang.code === currentLanguage)?.name || 'English';
+  };
+
+  return (
+    <LanguageContext.Provider value={{ currentLanguage, setLanguage, getCurrentLanguageName }}>
+      {children}
+    </LanguageContext.Provider>
+  );
+};
+
+export const useLanguage = () => {
+  const context = useContext(LanguageContext);
+  if (context === undefined) {
+    throw new Error('useLanguage must be used within a LanguageProvider');
+  }
+  return context;
+};
+
+const LanguageSwitcher = () => {
+  const { currentLanguage, setLanguage, getCurrentLanguageName } = useLanguage();
+
+  const handleLanguageChange = (langCode: string) => {
+    setLanguage(langCode);
   };
 
   return (

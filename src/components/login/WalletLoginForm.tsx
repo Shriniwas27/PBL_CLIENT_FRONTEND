@@ -13,6 +13,8 @@ declare global {
       request: (request: { method: string, params?: any[] }) => Promise<any>;
       on: (event: string, callback: (...args: any[]) => void) => void;
       removeListener: (event: string, callback: (...args: any[]) => void) => void;
+      // Add selectedAddress as an optional property
+      selectedAddress?: string;
     };
   }
 }
@@ -103,20 +105,34 @@ const WalletLoginForm = () => {
     window.open('https://metamask.io/download/', '_blank');
   };
 
-  const handleWalletLogin = () => {
+  const handleWalletLogin = async () => {
     // Simulate wallet authentication with signature
     setIsVerifying(true);
+    setErrorMessage('');
     
-    // Store user wallet address in sessionStorage for use in voting
-    if (window.ethereum && window.ethereum.selectedAddress) {
-      sessionStorage.setItem('walletAddress', window.ethereum.selectedAddress);
-    }
-    
-    setTimeout(() => {
-      setIsVerifying(false);
+    try {
+      // Get the connected accounts
+      const accounts = await window.ethereum!.request({ 
+        method: 'eth_accounts' 
+      });
+      
+      if (accounts.length === 0) {
+        throw new Error('No accounts connected. Please connect your wallet first.');
+      }
+      
+      // Store user wallet address in sessionStorage for use in voting
+      sessionStorage.setItem('walletAddress', accounts[0]);
+      
+      // Success
       toast.success('Authentication successful');
+      setIsVerifying(false);
       navigate('/candidates');
-    }, 2000);
+    } catch (error: any) {
+      console.error("Error during wallet login:", error);
+      setErrorMessage(error.message || 'Failed to complete authentication');
+      toast.error('Authentication failed');
+      setIsVerifying(false);
+    }
   };
 
   // If MetaMask is not installed
@@ -187,6 +203,12 @@ const WalletLoginForm = () => {
           <p className="text-sm text-green-700">{walletAddress}</p>
         </div>
       </div>
+      
+      {errorMessage && (
+        <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+          {errorMessage}
+        </div>
+      )}
       
       <Button
         className="w-full"

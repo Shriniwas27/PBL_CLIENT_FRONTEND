@@ -42,6 +42,12 @@ const OtpLoginForm = () => {
     setIsVerifying(true);
     setTimeout(() => {
       setIsVerifying(false);
+      
+      // Store auth info in sessionStorage for later use
+      sessionStorage.setItem('authMethod', 'otp');
+      sessionStorage.setItem('phoneNumber', phoneNumber);
+      sessionStorage.setItem('isAuthenticated', 'true');
+      
       toast.success('OTP verified successfully');
       navigate('/candidates');
     }, 2000);

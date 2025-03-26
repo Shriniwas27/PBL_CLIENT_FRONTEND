@@ -1,5 +1,5 @@
-
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -20,9 +20,25 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useLanguage } from '@/components/LanguageSwitcher';
+import VoterHistory from '@/components/voting/VoterHistory';
+import UserComplaints from '@/components/complaints/UserComplaints';
+import { toast } from 'sonner';
 
 const VoterInfo = () => {
+  const navigate = useNavigate();
   const { currentLanguage } = useLanguage();
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  
+  // Check authentication on component mount
+  useEffect(() => {
+    const authStatus = sessionStorage.getItem('isAuthenticated') === 'true';
+    setIsAuthenticated(authStatus);
+    
+    if (!authStatus) {
+      toast.error('You must be logged in to view this page');
+      navigate('/login');
+    }
+  }, [navigate]);
   
   const voterDetails = {
     name: 'John Smith',
@@ -32,22 +48,31 @@ const VoterInfo = () => {
     constituency: 'North District',
     pollingStation: 'Community Center, Block B',
     registrationDate: 'January 15, 2024',
-    votingStatus: 'Not Voted',
+    votingStatus: localStorage.getItem(`voted_${voterDetails.voterId}`) === 'true' ? 'Voted' : 'Not Voted',
   };
 
   const upcomingElections = [
     {
       id: 1,
-      name: 'General Elections',
-      date: 'May 12, 2025',
-      votingHours: '8:00 AM - 6:00 PM',
+      title: 'Local Council Elections',
+      date: 'March 15, 2024',
+      location: 'City Hall Auditorium',
+      candidates: 12,
     },
     {
       id: 2,
-      name: 'Local Council Elections',
-      date: 'August 24, 2025',
-      votingHours: '9:00 AM - 5:00 PM',
-    }
+      title: 'State Referendum on Education',
+      date: 'April 22, 2024',
+      location: 'Various polling stations',
+      candidates: 0,
+    },
+    {
+      id: 3,
+      title: 'General Elections 2025',
+      date: 'November 7, 2025',
+      location: 'Nationwide',
+      candidates: 0,
+    },
   ];
 
   const faqs = [
@@ -69,48 +94,144 @@ const VoterInfo = () => {
     }
   ];
 
-  // Simple translations
   const translations = {
-    en: {
-      voterProfile: "Voter Profile",
-      quickAccess: "Quick Access",
-      upcomingElections: "Upcoming Elections",
-      faq: "Frequently Asked Questions",
-      viewCandidates: "View Candidates",
-      goToVoting: "Go to Voting",
-      votingGuidelines: "Voting Guidelines",
-      submitComplaint: "Submit Complaint",
-      nextElection: "Next Election",
-      details: "Details"
+    voterProfile: {
+      en: 'Voter Profile',
+      es: 'Perfil del votante',
+      fr: 'Profil de l\'électeur',
+      de: 'Wählerprofil',
     },
-    es: {
-      voterProfile: "Perfil de Votante",
-      quickAccess: "Acceso Rápido",
-      upcomingElections: "Próximas Elecciones",
-      faq: "Preguntas Frecuentes",
-      viewCandidates: "Ver Candidatos",
-      goToVoting: "Ir a Votar",
-      votingGuidelines: "Pautas de Votación",
-      submitComplaint: "Enviar Queja",
-      nextElection: "Próxima Elección",
-      details: "Detalles"
+    personalDetails: {
+      en: 'Personal Details',
+      es: 'Detalles personales',
+      fr: 'Informations personnelles',
+      de: 'Persönliche Details',
     },
-    fr: {
-      voterProfile: "Profil d'Électeur",
-      quickAccess: "Accès Rapide",
-      upcomingElections: "Élections à Venir",
-      faq: "Questions Fréquentes",
-      viewCandidates: "Voir les Candidats",
-      goToVoting: "Aller Voter",
-      votingGuidelines: "Directives de Vote",
-      submitComplaint: "Soumettre une Plainte",
-      nextElection: "Prochaine Élection",
-      details: "Détails"
-    }
+    name: {
+      en: 'Name',
+      es: 'Nombre',
+      fr: 'Nom',
+      de: 'Name',
+    },
+    voterId: {
+      en: 'Voter ID',
+      es: 'ID de votante',
+      fr: 'ID d\'électeur',
+      de: 'Wähler-ID',
+    },
+    age: {
+      en: 'Age',
+      es: 'Edad',
+      fr: 'Âge',
+      de: 'Alter',
+    },
+    address: {
+      en: 'Address',
+      es: 'Dirección',
+      fr: 'Adresse',
+      de: 'Adresse',
+    },
+    constituency: {
+      en: 'Constituency',
+      es: 'Distrito electoral',
+      fr: 'Circonscription',
+      de: 'Wahlkreis',
+    },
+    pollingStation: {
+      en: 'Polling Station',
+      es: 'Colegio electoral',
+      fr: 'Bureau de vote',
+      de: 'Wahllokal',
+    },
+    registrationDate: {
+      en: 'Registration Date',
+      es: 'Fecha de registro',
+      fr: 'Date d\'inscription',
+      de: 'Registrierungsdatum',
+    },
+    votingStatus: {
+      en: 'Voting Status',
+      es: 'Estado de votación',
+      fr: 'Statut de vote',
+      de: 'Wahlstatus',
+    },
+    upcomingElections: {
+      en: 'Upcoming Elections',
+      es: 'Próximas elecciones',
+      fr: 'Prochaines élections',
+      de: 'Bevorstehende Wahlen',
+    },
+    electionTitle: {
+      en: 'Election Title',
+      es: 'Título de la elección',
+      fr: 'Titre de l\'élection',
+      de: 'Wahltitel',
+    },
+    date: {
+      en: 'Date',
+      es: 'Fecha',
+      fr: 'Date',
+      de: 'Datum',
+    },
+    location: {
+      en: 'Location',
+      es: 'Ubicación',
+      fr: 'Lieu',
+      de: 'Ort',
+    },
+    candidates: {
+      en: 'Candidates',
+      es: 'Candidatos',
+      fr: 'Candidats',
+      de: 'Kandidaten',
+    },
+    faqs: {
+      en: 'Frequently Asked Questions',
+      es: 'Preguntas frecuentes',
+      fr: 'Questions fréquemment posées',
+      de: 'Häufig gestellte Fragen',
+    },
+    quickLinks: {
+      en: 'Quick Links',
+      es: 'Enlaces rápidos',
+      fr: 'Liens rapides',
+      de: 'Schnelllinks',
+    },
+    editProfile: {
+      en: 'Edit Profile',
+      es: 'Editar perfil',
+      fr: 'Modifier le profil',
+      de: 'Profil bearbeiten',
+    },
+    contactSupport: {
+      en: 'Contact Support',
+      es: 'Contactar con soporte',
+      fr: 'Contacter le support',
+      de: 'Support kontaktieren',
+    },
+    votingGuidelines: {
+      en: 'Voting Guidelines',
+      es: 'Guías de votación',
+      fr: 'Directives de vote',
+      de: 'Wahlrichtlinien',
+    },
+    viewResults: {
+      en: 'View Results',
+      es: 'Ver resultados',
+      fr: 'Voir les résultats',
+      de: 'Ergebnisse anzeigen',
+    },
+    submitComplaint: {
+      en: 'Submit a Complaint',
+      es: 'Presentar una queja',
+      fr: 'Soumettre une plainte',
+      de: 'Beschwerde einreichen',
+    },
   };
-  
-  // Get translated text based on current language (fallback to English)
-  const t = translations[currentLanguage as keyof typeof translations] || translations.en;
+
+  if (!isAuthenticated) {
+    return null; // Don't render anything until auth check is complete
+  }
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -121,179 +242,151 @@ const VoterInfo = () => {
         
         <div className="container-custom py-12">
           <div className="text-center max-w-2xl mx-auto mb-8 stagger-animation">
-            <div className="inline-block p-4 bg-primary/10 rounded-full mb-4">
-              <UserCheck className="h-8 w-8 text-primary" />
+            <div className="inline-block px-3 py-1 mb-4 text-sm font-medium rounded-full bg-primary/10 text-primary">
+              {translations.voterProfile[currentLanguage]}
             </div>
-            <h1 className="text-3xl md:text-4xl font-bold mb-2">Voter Information</h1>
+            <h1 className="text-3xl md:text-4xl font-bold mb-4">
+              {voterDetails.name}
+            </h1>
             <p className="text-lg text-foreground/80">
-              Access your voter profile and election details
+              {translations.voterId[currentLanguage]}: {voterDetails.voterId}
             </p>
           </div>
           
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-12">
-            {/* Voter Profile Card */}
-            <Card className="glass-card lg:col-span-2">
-              <CardHeader className="border-b border-border pb-4">
-                <CardTitle className="flex items-center">
-                  <UserCheck className="h-5 w-5 mr-2 text-primary" />
-                  {t.voterProfile}
+            <Card className="glass-card">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-xl font-bold">
+                  {translations.personalDetails[currentLanguage]}
                 </CardTitle>
+                <UserCheck className="h-5 w-5 text-foreground/60" />
               </CardHeader>
-              <CardContent className="p-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-4">
-                    <div>
-                      <h3 className="text-xl font-semibold mb-1">{voterDetails.name}</h3>
-                      <p className="text-sm text-foreground/70">
-                        Voter ID: <span className="font-mono">{voterDetails.voterId}</span>
-                      </p>
-                    </div>
-                    
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <p className="text-sm font-medium text-foreground/70">Age</p>
-                        <p>{voterDetails.age} years</p>
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-foreground/70">Registration Date</p>
-                        <p>{voterDetails.registrationDate}</p>
-                      </div>
-                    </div>
-                    
-                    <div>
-                      <p className="text-sm font-medium text-foreground/70">Address</p>
-                      <p>{voterDetails.address}</p>
-                    </div>
-                    
-                    <div>
-                      <p className="text-sm font-medium text-foreground/70">Constituency</p>
-                      <p>{voterDetails.constituency}</p>
-                    </div>
-                    
-                    <div>
-                      <p className="text-sm font-medium text-foreground/70">Polling Station</p>
-                      <p>{voterDetails.pollingStation}</p>
-                    </div>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3">
+                    <Info className="h-4 w-4 text-foreground/70" />
+                    <span className="text-sm font-medium">{translations.name[currentLanguage]}:</span>
+                    <span className="text-sm">{voterDetails.name}</span>
                   </div>
-                  
-                  <div className="flex flex-col">
-                    <div className="p-4 mb-4 bg-primary/10 rounded-lg">
-                      <h3 className="font-medium mb-2">Voting Status</h3>
-                      <div className="flex items-center gap-2">
-                        <div className="h-3 w-3 rounded-full bg-amber-500"></div>
-                        <span>{voterDetails.votingStatus}</span>
-                      </div>
-                    </div>
-                    
-                    <div className="flex flex-col gap-3 mt-auto">
-                      <Button asChild>
-                        <Link to="/candidates">
-                          {t.viewCandidates}
-                          <ChevronRight className="ml-2 h-4 w-4" />
-                        </Link>
-                      </Button>
-                      <Button variant="outline" asChild>
-                        <Link to="/voting">
-                          {t.goToVoting}
-                          <ChevronRight className="ml-2 h-4 w-4" />
-                        </Link>
-                      </Button>
-                      <Button variant="ghost" asChild>
-                        <Link to="/guidelines">
-                          {t.votingGuidelines}
-                          <ChevronRight className="ml-2 h-4 w-4" />
-                        </Link>
-                      </Button>
-                    </div>
+                  <div className="flex items-center gap-3">
+                    <FileText className="h-4 w-4 text-foreground/70" />
+                    <span className="text-sm font-medium">{translations.voterId[currentLanguage]}:</span>
+                    <span className="text-sm">{voterDetails.voterId}</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Calendar className="h-4 w-4 text-foreground/70" />
+                    <span className="text-sm font-medium">{translations.age[currentLanguage]}:</span>
+                    <span className="text-sm">{voterDetails.age}</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <MapPin className="h-4 w-4 text-foreground/70" />
+                    <span className="text-sm font-medium">{translations.address[currentLanguage]}:</span>
+                    <span className="text-sm">{voterDetails.address}</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <ShieldCheck className="h-4 w-4 text-foreground/70" />
+                    <span className="text-sm font-medium">{translations.constituency[currentLanguage]}:</span>
+                    <span className="text-sm">{voterDetails.constituency}</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Users className="h-4 w-4 text-foreground/70" />
+                    <span className="text-sm font-medium">{translations.pollingStation[currentLanguage]}:</span>
+                    <span className="text-sm">{voterDetails.pollingStation}</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Clock className="h-4 w-4 text-foreground/70" />
+                    <span className="text-sm font-medium">{translations.registrationDate[currentLanguage]}:</span>
+                    <span className="text-sm">{voterDetails.registrationDate}</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <AlertCircle className="h-4 w-4 text-foreground/70" />
+                    <span className="text-sm font-medium">{translations.votingStatus[currentLanguage]}:</span>
+                    <span className="text-sm">{voterDetails.votingStatus}</span>
                   </div>
                 </div>
               </CardContent>
             </Card>
             
-            {/* Quick Links Card */}
             <Card className="glass-card">
-              <CardHeader className="border-b border-border pb-4">
-                <CardTitle className="flex items-center">
-                  <Info className="h-5 w-5 mr-2 text-primary" />
-                  {t.quickAccess}
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-xl font-bold">
+                  {translations.quickLinks[currentLanguage]}
                 </CardTitle>
+                <HelpCircle className="h-5 w-5 text-foreground/60" />
               </CardHeader>
-              <CardContent className="p-6">
-                <div className="space-y-4">
-                  <Button variant="outline" className="w-full justify-start" asChild>
-                    <Link to="/candidates">
-                      <Users className="mr-2 h-4 w-4 text-primary" />
-                      {t.viewCandidates}
-                    </Link>
-                  </Button>
-                  <Button variant="outline" className="w-full justify-start" asChild>
-                    <Link to="/guidelines">
-                      <FileText className="mr-2 h-4 w-4 text-primary" />
-                      {t.votingGuidelines}
-                    </Link>
-                  </Button>
-                  <Button variant="outline" className="w-full justify-start" asChild>
-                    <Link to="/results">
-                      <ShieldCheck className="mr-2 h-4 w-4 text-primary" />
-                      Election Results
-                    </Link>
-                  </Button>
-                  <Button variant="outline" className="w-full justify-start" asChild>
-                    <Link to="/complaints">
-                      <AlertCircle className="mr-2 h-4 w-4 text-primary" />
-                      {t.submitComplaint}
-                    </Link>
-                  </Button>
-                  <Separator className="my-2" />
-                  <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                    <h3 className="flex items-center text-sm font-medium text-yellow-800 mb-2">
-                      <Clock className="h-4 w-4 mr-1 text-yellow-600" />
-                      {t.nextElection}
-                    </h3>
-                    <p className="text-sm text-yellow-700">
-                      {upcomingElections[0].name}
-                    </p>
-                    <p className="text-xs text-yellow-600 mt-1">
-                      {upcomingElections[0].date}
-                    </p>
-                  </div>
-                </div>
+              <CardContent className="flex flex-col space-y-3">
+                <Button variant="ghost" className="justify-start">
+                  <Link to="/edit-profile" className="flex items-center w-full">
+                    {translations.editProfile[currentLanguage]}
+                    <ChevronRight className="ml-auto h-4 w-4" />
+                  </Link>
+                </Button>
+                <Button variant="ghost" className="justify-start">
+                  <Link to="/contact-support" className="flex items-center w-full">
+                    {translations.contactSupport[currentLanguage]}
+                    <ChevronRight className="ml-auto h-4 w-4" />
+                  </Link>
+                </Button>
+                <Button variant="ghost" className="justify-start">
+                  <Link to="/guidelines" className="flex items-center w-full">
+                    {translations.votingGuidelines[currentLanguage]}
+                    <ChevronRight className="ml-auto h-4 w-4" />
+                  </Link>
+                </Button>
+                <Button variant="ghost" className="justify-start">
+                  <Link to="/results" className="flex items-center w-full">
+                    {translations.viewResults[currentLanguage]}
+                    <ChevronRight className="ml-auto h-4 w-4" />
+                  </Link>
+                </Button>
+                <Button variant="ghost" className="justify-start">
+                  <Link to="/complaints" className="flex items-center w-full">
+                    {translations.submitComplaint[currentLanguage]}
+                    <ChevronRight className="ml-auto h-4 w-4" />
+                  </Link>
+                </Button>
               </CardContent>
             </Card>
           </div>
           
-          {/* Upcoming Elections */}
-          <Card className="glass-card mb-12">
-            <CardHeader className="border-b border-border pb-4">
-              <CardTitle className="flex items-center">
-                <Calendar className="h-5 w-5 mr-2 text-primary" />
-                {t.upcomingElections}
+          {/* Voting History */}
+          <div className="mb-12">
+            <VoterHistory userId={voterDetails.voterId} />
+          </div>
+          
+          {/* Complaints */}
+          <div className="mb-12">
+            <UserComplaints userId={voterDetails.voterId} />
+          </div>
+          
+          <Card className="glass-card">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-xl font-bold">
+                {translations.upcomingElections[currentLanguage]}
               </CardTitle>
+              <Calendar className="h-5 w-5 text-foreground/60" />
             </CardHeader>
-            <CardContent className="p-6">
+            <CardContent>
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Election</TableHead>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Voting Hours</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                    <TableHead className="w-[200px]">
+                      {translations.electionTitle[currentLanguage]}
+                    </TableHead>
+                    <TableHead>{translations.date[currentLanguage]}</TableHead>
+                    <TableHead>{translations.location[currentLanguage]}</TableHead>
+                    <TableHead className="text-right">
+                      {translations.candidates[currentLanguage]}
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {upcomingElections.map((election) => (
                     <TableRow key={election.id}>
-                      <TableCell className="font-medium">{election.name}</TableCell>
+                      <TableCell className="font-medium">{election.title}</TableCell>
                       <TableCell>{election.date}</TableCell>
-                      <TableCell>{election.votingHours}</TableCell>
-                      <TableCell className="text-right">
-                        <Button variant="ghost" size="sm" asChild>
-                          <Link to="/guidelines">
-                            {t.details}
-                            <ChevronRight className="ml-1 h-4 w-4" />
-                          </Link>
-                        </Button>
-                      </TableCell>
+                      <TableCell>{election.location}</TableCell>
+                      <TableCell className="text-right">{election.candidates}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -301,24 +394,24 @@ const VoterInfo = () => {
             </CardContent>
           </Card>
           
-          {/* FAQs */}
           <Card className="glass-card">
-            <CardHeader className="border-b border-border pb-4">
-              <CardTitle className="flex items-center">
-                <HelpCircle className="h-5 w-5 mr-2 text-primary" />
-                {t.faq}
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-xl font-bold">
+                {translations.faqs[currentLanguage]}
               </CardTitle>
+              <HelpCircle className="h-5 w-5 text-foreground/60" />
             </CardHeader>
-            <CardContent className="p-6">
-              <div className="space-y-6">
-                {faqs.map((faq, index) => (
-                  <div key={index}>
-                    <h3 className="text-lg font-medium mb-2">{faq.question}</h3>
-                    <p className="text-foreground/80">{faq.answer}</p>
-                    {index < faqs.length - 1 && <Separator className="mt-4" />}
-                  </div>
-                ))}
-              </div>
+            <CardContent className="space-y-6">
+              {faqs.map((faq, index) => (
+                <div key={index} className="space-y-2">
+                  <h3 className="text-lg font-semibold flex items-center gap-2">
+                    <HelpCircle className="h-4 w-4 text-muted-foreground" />
+                    {faq.question}
+                  </h3>
+                  <p className="text-sm text-muted-foreground">{faq.answer}</p>
+                  {index < faqs.length - 1 && <Separator />}
+                </div>
+              ))}
             </CardContent>
           </Card>
         </div>

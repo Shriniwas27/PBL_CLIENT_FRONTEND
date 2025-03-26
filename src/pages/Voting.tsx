@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
@@ -89,6 +88,7 @@ const Voting = () => {
   const [votingStep, setVotingStep] = useState(0);
   const [metamaskError, setMetamaskError] = useState<string | null>(null);
   const [transactionHash, setTransactionHash] = useState<string | null>(null);
+  const [hasVotedBefore, setHasVotedBefore] = useState(false);
   
   // Mock voter information that would come from backend
   // In a real application, this would be fetched from an API
@@ -97,6 +97,29 @@ const Voting = () => {
     constituency: 'North District', // This would come from backend
     voterId: 'ABC1234567',
   };
+  
+  // Check authentication and previous voting status on component mount
+  useEffect(() => {
+    const isAuthenticated = sessionStorage.getItem('isAuthenticated') === 'true';
+    if (!isAuthenticated) {
+      toast.error('You must be logged in to vote');
+      navigate('/login');
+      return;
+    }
+    
+    // Check if user has voted before (in a real app, this would come from the backend)
+    const checkVotingStatus = async () => {
+      // Simulate API call to check if user has voted
+      const mockHasVoted = localStorage.getItem(`voted_${voterInfo.voterId}`) === 'true';
+      setHasVotedBefore(mockHasVoted);
+      
+      if (mockHasVoted) {
+        toast.warning('You have already cast your vote in this election');
+      }
+    };
+    
+    checkVotingStatus();
+  }, [navigate, voterInfo.voterId]);
   
   // Get candidate information based on ID
   const selectedCandidate = candidates.find(c => c.id === selectedCandidateId);
@@ -136,6 +159,12 @@ const Voting = () => {
       const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
       const account = accounts[0];
       
+      // Verify if account matches the one used to log in
+      const loggedInAddress = sessionStorage.getItem('walletAddress');
+      if (loggedInAddress && loggedInAddress.toLowerCase() !== account.toLowerCase()) {
+        throw new Error('The selected account does not match the account you logged in with');
+      }
+      
       // Simulating a transaction to be signed
       // In a real application, this would be a call to a smart contract
       const transactionParameters = {
@@ -173,6 +202,23 @@ const Voting = () => {
       setTimeout(() => {
         setIsVoting(false);
         setIsVotingComplete(true);
+        
+        // Store voting record in local storage (in a real app, this would be on the blockchain)
+        localStorage.setItem(`voted_${voterInfo.voterId}`, 'true');
+        
+        // Store voting details for history
+        const votingRecord = {
+          electionId: 1,
+          electionName: 'General Elections 2023',
+          votedDate: new Date().toISOString(),
+          candidateName: selectedCandidate?.name,
+          party: selectedCandidate?.party,
+          transactionHash: transactionHash,
+        };
+        
+        const existingHistory = JSON.parse(localStorage.getItem('votingHistory') || '[]');
+        localStorage.setItem('votingHistory', JSON.stringify([...existingHistory, votingRecord]));
+        
         toast.success('Your vote has been recorded successfully on the blockchain!');
       }, 3000);
     } else {
@@ -188,6 +234,56 @@ const Voting = () => {
       setIsConfirmOpen(true);
     }
   };
+
+  // Show already voted view if user has voted before
+  if (hasVotedBefore && !isVotingComplete) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Navbar />
+        
+        <div className="flex-1 relative">
+          <div className="absolute inset-0 -z-10 bg-gradient-to-br from-primary/5 to-accent/5"></div>
+          
+          <div className="container-custom py-12">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="mb-8" 
+              onClick={() => navigate('/candidates')}
+            >
+              <ChevronLeft className="h-4 w-4 mr-1" />
+              Back to Candidates
+            </Button>
+            
+            <div className="max-w-2xl mx-auto">
+              <Card className="glass-card overflow-hidden">
+                <CardContent className="p-8 text-center">
+                  <div className="h-20 w-20 rounded-full bg-amber-100 flex items-center justify-center mx-auto mb-6">
+                    <Lock className="h-10 w-10 text-amber-600" />
+                  </div>
+                  
+                  <h2 className="text-2xl font-bold mb-2">You Have Already Voted</h2>
+                  <p className="text-foreground/70 mb-6">
+                    Our records show that you have already cast your vote in this election.
+                    Each voter is allowed to vote only once.
+                  </p>
+                  
+                  <div className="flex gap-4 justify-center">
+                    <Button variant="outline" onClick={() => navigate('/voter-info')}>
+                      View Voting History
+                    </Button>
+                    <Button onClick={() => navigate('/results')}>
+                      View Results
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col">

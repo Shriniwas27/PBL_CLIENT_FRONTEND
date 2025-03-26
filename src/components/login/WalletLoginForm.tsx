@@ -120,8 +120,10 @@ const WalletLoginForm = () => {
         throw new Error('No accounts connected. Please connect your wallet first.');
       }
       
-      // Store user wallet address in sessionStorage for use in voting
+      // Store user wallet address and auth info in sessionStorage
       sessionStorage.setItem('walletAddress', accounts[0]);
+      sessionStorage.setItem('authMethod', 'wallet');
+      sessionStorage.setItem('isAuthenticated', 'true');
       
       // Success
       toast.success('Authentication successful');

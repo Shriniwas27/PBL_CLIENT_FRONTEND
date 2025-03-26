@@ -56,12 +56,12 @@ const VoterInfo = () => {
       answer: 'You must bring your voter ID card and a government-issued photo ID such as passport, driver\'s license, or national ID card.'
     },
     {
-      question: 'Can I vote if I've recently moved?',
-      answer: 'If you've moved to a new constituency, you need to update your voter registration at least 30 days before the election. If you've moved within the same constituency, you can vote at your assigned polling station.'
+      question: "Can I vote if I've recently moved?",
+      answer: "If you've moved to a new constituency, you need to update your voter registration at least 30 days before the election. If you've moved within the same constituency, you can vote at your assigned polling station."
     },
     {
-      question: 'What if I can't vote in person on election day?',
-      answer: 'You may be eligible for early voting or mail-in ballots. Applications for these options must be submitted at least 14 days before the election.'
+      question: "What if I can't vote in person on election day?",
+      answer: "You may be eligible for early voting or mail-in ballots. Applications for these options must be submitted at least 14 days before the election."
     },
     {
       question: 'How can I verify my voter registration status?',

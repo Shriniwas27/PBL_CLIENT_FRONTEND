@@ -13,7 +13,6 @@ declare global {
       request: (request: { method: string, params?: any[] }) => Promise<any>;
       on: (event: string, callback: (...args: any[]) => void) => void;
       removeListener: (event: string, callback: (...args: any[]) => void) => void;
-      // Add selectedAddress as an optional property
       selectedAddress?: string;
     };
   }
@@ -124,6 +123,12 @@ const WalletLoginForm = () => {
       sessionStorage.setItem('walletAddress', accounts[0]);
       sessionStorage.setItem('authMethod', 'wallet');
       sessionStorage.setItem('isAuthenticated', 'true');
+      
+      // Mock voter information - in a real app, this would come from the backend
+      // based on the wallet address
+      sessionStorage.setItem('voterName', 'John Smith');
+      sessionStorage.setItem('voterId', 'ABC1234567');
+      sessionStorage.setItem('constituency', 'North District');
       
       // Success
       toast.success('Authentication successful');

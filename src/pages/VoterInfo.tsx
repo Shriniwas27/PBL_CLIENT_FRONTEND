@@ -1,236 +1,102 @@
-import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+
+import React, { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { 
-  UserCheck, 
-  Calendar, 
-  MapPin, 
-  Info, 
-  ShieldCheck, 
-  FileText,
-  ChevronRight,
-  Users,
-  Clock,
-  AlertCircle,
-  HelpCircle
-} from 'lucide-react';
-import { Link } from 'react-router-dom';
-import { useLanguage } from '@/components/LanguageSwitcher';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import VoterHistory from '@/components/voting/VoterHistory';
-import UserComplaints from '@/components/complaints/UserComplaints';
-import { toast } from 'sonner';
+import { ArrowLeft, UserCircle, Shield, MapPin, Info, AlertTriangle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Link, useNavigate } from 'react-router-dom';
 
 const VoterInfo = () => {
   const navigate = useNavigate();
-  const { currentLanguage } = useLanguage();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  
-  // Check authentication on component mount
-  useEffect(() => {
-    const authStatus = sessionStorage.getItem('isAuthenticated') === 'true';
-    setIsAuthenticated(authStatus);
-    
-    if (!authStatus) {
-      toast.error('You must be logged in to view this page');
-      navigate('/login');
-    }
-  }, [navigate]);
-  
-  const voterDetails = {
+  const [voterDetails, setVoterDetails] = useState({
     name: 'John Smith',
     voterId: 'ABC1234567',
-    age: 32,
-    address: '123 Main Street, Anytown',
     constituency: 'North District',
-    pollingStation: 'Community Center, Block B',
-    registrationDate: 'January 15, 2024',
-    votingStatus: localStorage.getItem(`voted_${voterDetails.voterId}`) === 'true' ? 'Voted' : 'Not Voted',
-  };
+    registrationDate: '2022-03-15',
+    lastLogin: new Date().toISOString().split('T')[0],
+  });
+  const [tab, setTab] = useState('profile');
+  const [location, setLocation] = useState<{latitude: number, longitude: number} | null>(null);
+  const [locationAnomaly, setLocationAnomaly] = useState(false);
+  const [registeredLocation, setRegisteredLocation] = useState({
+    latitude: 37.7749,
+    longitude: -122.4194,
+    address: "San Francisco, CA"
+  });
 
-  const upcomingElections = [
-    {
-      id: 1,
-      title: 'Local Council Elections',
-      date: 'March 15, 2024',
-      location: 'City Hall Auditorium',
-      candidates: 12,
-    },
-    {
-      id: 2,
-      title: 'State Referendum on Education',
-      date: 'April 22, 2024',
-      location: 'Various polling stations',
-      candidates: 0,
-    },
-    {
-      id: 3,
-      title: 'General Elections 2025',
-      date: 'November 7, 2025',
-      location: 'Nationwide',
-      candidates: 0,
-    },
-  ];
-
-  const faqs = [
-    {
-      question: 'What ID do I need to bring on voting day?',
-      answer: 'You must bring your voter ID card and a government-issued photo ID such as passport, driver\'s license, or national ID card.'
-    },
-    {
-      question: "Can I vote if I've recently moved?",
-      answer: "If you've moved to a new constituency, you need to update your voter registration at least 30 days before the election. If you've moved within the same constituency, you can vote at your assigned polling station."
-    },
-    {
-      question: "What if I can't vote in person on election day?",
-      answer: "You may be eligible for early voting or mail-in ballots. Applications for these options must be submitted at least 14 days before the election."
-    },
-    {
-      question: 'How can I verify my voter registration status?',
-      answer: 'You can verify your registration status online through our voter portal or by contacting your local election office.'
+  useEffect(() => {
+    // Check if user is authenticated
+    const authenticated = sessionStorage.getItem('isAuthenticated') === 'true';
+    setIsAuthenticated(authenticated);
+    
+    if (!authenticated) {
+      navigate('/login');
     }
-  ];
+    
+    // Load voter details from sessionStorage/localStorage if available
+    const storedVoterId = sessionStorage.getItem('voterId') || 'ABC1234567';
+    
+    // In a real app, this would come from the backend
+    // For demo purposes, we're using mock data
+    setVoterDetails({
+      name: sessionStorage.getItem('voterName') || 'John Smith',
+      voterId: storedVoterId,
+      constituency: sessionStorage.getItem('constituency') || 'North District',
+      registrationDate: '2022-03-15',
+      lastLogin: new Date().toISOString().split('T')[0],
+    });
+  }, [navigate]);
 
-  const translations = {
-    voterProfile: {
-      en: 'Voter Profile',
-      es: 'Perfil del votante',
-      fr: 'Profil de l\'électeur',
-      de: 'Wählerprofil',
-    },
-    personalDetails: {
-      en: 'Personal Details',
-      es: 'Detalles personales',
-      fr: 'Informations personnelles',
-      de: 'Persönliche Details',
-    },
-    name: {
-      en: 'Name',
-      es: 'Nombre',
-      fr: 'Nom',
-      de: 'Name',
-    },
-    voterId: {
-      en: 'Voter ID',
-      es: 'ID de votante',
-      fr: 'ID d\'électeur',
-      de: 'Wähler-ID',
-    },
-    age: {
-      en: 'Age',
-      es: 'Edad',
-      fr: 'Âge',
-      de: 'Alter',
-    },
-    address: {
-      en: 'Address',
-      es: 'Dirección',
-      fr: 'Adresse',
-      de: 'Adresse',
-    },
-    constituency: {
-      en: 'Constituency',
-      es: 'Distrito electoral',
-      fr: 'Circonscription',
-      de: 'Wahlkreis',
-    },
-    pollingStation: {
-      en: 'Polling Station',
-      es: 'Colegio electoral',
-      fr: 'Bureau de vote',
-      de: 'Wahllokal',
-    },
-    registrationDate: {
-      en: 'Registration Date',
-      es: 'Fecha de registro',
-      fr: 'Date d\'inscription',
-      de: 'Registrierungsdatum',
-    },
-    votingStatus: {
-      en: 'Voting Status',
-      es: 'Estado de votación',
-      fr: 'Statut de vote',
-      de: 'Wahlstatus',
-    },
-    upcomingElections: {
-      en: 'Upcoming Elections',
-      es: 'Próximas elecciones',
-      fr: 'Prochaines élections',
-      de: 'Bevorstehende Wahlen',
-    },
-    electionTitle: {
-      en: 'Election Title',
-      es: 'Título de la elección',
-      fr: 'Titre de l\'élection',
-      de: 'Wahltitel',
-    },
-    date: {
-      en: 'Date',
-      es: 'Fecha',
-      fr: 'Date',
-      de: 'Datum',
-    },
-    location: {
-      en: 'Location',
-      es: 'Ubicación',
-      fr: 'Lieu',
-      de: 'Ort',
-    },
-    candidates: {
-      en: 'Candidates',
-      es: 'Candidatos',
-      fr: 'Candidats',
-      de: 'Kandidaten',
-    },
-    faqs: {
-      en: 'Frequently Asked Questions',
-      es: 'Preguntas frecuentes',
-      fr: 'Questions fréquemment posées',
-      de: 'Häufig gestellte Fragen',
-    },
-    quickLinks: {
-      en: 'Quick Links',
-      es: 'Enlaces rápidos',
-      fr: 'Liens rapides',
-      de: 'Schnelllinks',
-    },
-    editProfile: {
-      en: 'Edit Profile',
-      es: 'Editar perfil',
-      fr: 'Modifier le profil',
-      de: 'Profil bearbeiten',
-    },
-    contactSupport: {
-      en: 'Contact Support',
-      es: 'Contactar con soporte',
-      fr: 'Contacter le support',
-      de: 'Support kontaktieren',
-    },
-    votingGuidelines: {
-      en: 'Voting Guidelines',
-      es: 'Guías de votación',
-      fr: 'Directives de vote',
-      de: 'Wahlrichtlinien',
-    },
-    viewResults: {
-      en: 'View Results',
-      es: 'Ver resultados',
-      fr: 'Voir les résultats',
-      de: 'Ergebnisse anzeigen',
-    },
-    submitComplaint: {
-      en: 'Submit a Complaint',
-      es: 'Presentar una queja',
-      fr: 'Soumettre une plainte',
-      de: 'Beschwerde einreichen',
-    },
+  useEffect(() => {
+    // Get user's current location if they allow
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const currentLocation = {
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude
+          };
+          setLocation(currentLocation);
+          
+          // Check for location anomaly - simplified distance calculation
+          // In a real app, you would use a proper geolocation service
+          const distance = calculateDistance(
+            currentLocation.latitude, 
+            currentLocation.longitude,
+            registeredLocation.latitude,
+            registeredLocation.longitude
+          );
+          
+          // If user is more than 100km from registered location, flag as anomaly
+          if (distance > 100) {
+            setLocationAnomaly(true);
+          }
+        },
+        (error) => {
+          console.error("Error getting location:", error);
+        }
+      );
+    }
+  }, [registeredLocation]);
+
+  // Simple haversine formula to calculate distance between two coordinates in km
+  const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
+    const R = 6371; // Radius of the Earth in km
+    const dLat = (lat2 - lat1) * (Math.PI / 180);
+    const dLon = (lon2 - lon1) * (Math.PI / 180);
+    const a = 
+      Math.sin(dLat/2) * Math.sin(dLat/2) +
+      Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) * 
+      Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
   };
 
   if (!isAuthenticated) {
-    return null; // Don't render anything until auth check is complete
+    return null; // Will redirect in useEffect
   }
 
   return (
@@ -241,179 +107,197 @@ const VoterInfo = () => {
         <div className="absolute inset-0 -z-10 bg-gradient-to-br from-primary/5 to-accent/5"></div>
         
         <div className="container-custom py-12">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="mb-8" 
+            onClick={() => navigate('/')}
+          >
+            <ArrowLeft className="h-4 w-4 mr-1" />
+            Back to Home
+          </Button>
+          
           <div className="text-center max-w-2xl mx-auto mb-8 stagger-animation">
-            <div className="inline-block px-3 py-1 mb-4 text-sm font-medium rounded-full bg-primary/10 text-primary">
-              {translations.voterProfile[currentLanguage]}
-            </div>
-            <h1 className="text-3xl md:text-4xl font-bold mb-4">
-              {voterDetails.name}
-            </h1>
+            <h1 className="text-3xl md:text-4xl font-bold mb-4">Voter Information</h1>
             <p className="text-lg text-foreground/80">
-              {translations.voterId[currentLanguage]}: {voterDetails.voterId}
+              View your voter profile, voting history, and verify your voting activity.
             </p>
           </div>
           
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-12">
-            <Card className="glass-card">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-xl font-bold">
-                  {translations.personalDetails[currentLanguage]}
-                </CardTitle>
-                <UserCheck className="h-5 w-5 text-foreground/60" />
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex items-center gap-3">
-                    <Info className="h-4 w-4 text-foreground/70" />
-                    <span className="text-sm font-medium">{translations.name[currentLanguage]}:</span>
-                    <span className="text-sm">{voterDetails.name}</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <FileText className="h-4 w-4 text-foreground/70" />
-                    <span className="text-sm font-medium">{translations.voterId[currentLanguage]}:</span>
-                    <span className="text-sm">{voterDetails.voterId}</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <Calendar className="h-4 w-4 text-foreground/70" />
-                    <span className="text-sm font-medium">{translations.age[currentLanguage]}:</span>
-                    <span className="text-sm">{voterDetails.age}</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <MapPin className="h-4 w-4 text-foreground/70" />
-                    <span className="text-sm font-medium">{translations.address[currentLanguage]}:</span>
-                    <span className="text-sm">{voterDetails.address}</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <ShieldCheck className="h-4 w-4 text-foreground/70" />
-                    <span className="text-sm font-medium">{translations.constituency[currentLanguage]}:</span>
-                    <span className="text-sm">{voterDetails.constituency}</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <Users className="h-4 w-4 text-foreground/70" />
-                    <span className="text-sm font-medium">{translations.pollingStation[currentLanguage]}:</span>
-                    <span className="text-sm">{voterDetails.pollingStation}</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <Clock className="h-4 w-4 text-foreground/70" />
-                    <span className="text-sm font-medium">{translations.registrationDate[currentLanguage]}:</span>
-                    <span className="text-sm">{voterDetails.registrationDate}</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <AlertCircle className="h-4 w-4 text-foreground/70" />
-                    <span className="text-sm font-medium">{translations.votingStatus[currentLanguage]}:</span>
-                    <span className="text-sm">{voterDetails.votingStatus}</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+          <div className="max-w-4xl mx-auto">
+            <Tabs value={tab} onValueChange={setTab} className="mb-8">
+              <TabsList className="grid grid-cols-2">
+                <TabsTrigger value="profile" className="flex items-center gap-2">
+                  <UserCircle className="h-4 w-4" />
+                  Voter Profile
+                </TabsTrigger>
+                <TabsTrigger value="history" className="flex items-center gap-2">
+                  <Shield className="h-4 w-4" />
+                  Voting History
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
             
-            <Card className="glass-card">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-xl font-bold">
-                  {translations.quickLinks[currentLanguage]}
-                </CardTitle>
-                <HelpCircle className="h-5 w-5 text-foreground/60" />
-              </CardHeader>
-              <CardContent className="flex flex-col space-y-3">
-                <Button variant="ghost" className="justify-start">
-                  <Link to="/edit-profile" className="flex items-center w-full">
-                    {translations.editProfile[currentLanguage]}
-                    <ChevronRight className="ml-auto h-4 w-4" />
-                  </Link>
-                </Button>
-                <Button variant="ghost" className="justify-start">
-                  <Link to="/contact-support" className="flex items-center w-full">
-                    {translations.contactSupport[currentLanguage]}
-                    <ChevronRight className="ml-auto h-4 w-4" />
-                  </Link>
-                </Button>
-                <Button variant="ghost" className="justify-start">
-                  <Link to="/guidelines" className="flex items-center w-full">
-                    {translations.votingGuidelines[currentLanguage]}
-                    <ChevronRight className="ml-auto h-4 w-4" />
-                  </Link>
-                </Button>
-                <Button variant="ghost" className="justify-start">
-                  <Link to="/results" className="flex items-center w-full">
-                    {translations.viewResults[currentLanguage]}
-                    <ChevronRight className="ml-auto h-4 w-4" />
-                  </Link>
-                </Button>
-                <Button variant="ghost" className="justify-start">
-                  <Link to="/complaints" className="flex items-center w-full">
-                    {translations.submitComplaint[currentLanguage]}
-                    <ChevronRight className="ml-auto h-4 w-4" />
-                  </Link>
-                </Button>
-              </CardContent>
-            </Card>
+            <div className="grid md:grid-cols-3 gap-6">
+              <div className={`col-span-full ${tab === 'profile' ? 'md:col-span-1' : 'hidden md:block'}`}>
+                <Card className="glass-card">
+                  <CardHeader>
+                    <CardTitle className="text-lg">Voter Details</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div>
+                      <div className="text-sm font-medium text-foreground/70 mb-1">Name</div>
+                      <div className="font-medium">{voterDetails.name}</div>
+                    </div>
+                    <div>
+                      <div className="text-sm font-medium text-foreground/70 mb-1">Voter ID</div>
+                      <div className="font-medium">{voterDetails.voterId}</div>
+                    </div>
+                    <div>
+                      <div className="text-sm font-medium text-foreground/70 mb-1">Constituency</div>
+                      <div className="font-medium">{voterDetails.constituency}</div>
+                    </div>
+                    <div>
+                      <div className="text-sm font-medium text-foreground/70 mb-1">Registered On</div>
+                      <div className="font-medium">{voterDetails.registrationDate}</div>
+                    </div>
+                    
+                    <div className="pt-2">
+                      <div className="flex items-center gap-2">
+                        <MapPin className="h-4 w-4 text-primary" />
+                        <div className="text-sm font-medium">Registered Location</div>
+                      </div>
+                      <div className="text-sm mt-1">{registeredLocation.address}</div>
+                    </div>
+                    
+                    {locationAnomaly && (
+                      <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg mt-4">
+                        <div className="flex items-center gap-2">
+                          <AlertTriangle className="h-4 w-4 text-amber-600 flex-shrink-0" />
+                          <div className="text-sm font-medium text-amber-800">Location Anomaly Detected</div>
+                        </div>
+                        <div className="text-xs text-amber-700 mt-1">
+                          Your current location is significantly different from your registered address.
+                        </div>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+              
+              <div className={`col-span-full ${tab === 'profile' ? 'md:col-span-2' : 'md:col-span-3'}`}>
+                <TabsContent value="profile" className="mt-0 space-y-6">
+                  <Card className="glass-card">
+                    <CardHeader>
+                      <CardTitle className="text-lg">Active & Upcoming Elections</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                      {[
+                        {
+                          id: 1,
+                          name: "General Elections 2023",
+                          type: "General",
+                          constituency: "North District",
+                          date: "2023-11-30",
+                          status: "Active",
+                          detail: "This is a general election for the North District. Voters will elect representatives for the next 4-year term.",
+                          candidates: 5,
+                          votingHours: "8:00 AM - 5:00 PM",
+                          requiresId: true,
+                          location: "All designated polling stations in North District"
+                        },
+                        {
+                          id: 2,
+                          name: "Local Council Election 2023",
+                          type: "Local",
+                          constituency: "North District",
+                          date: "2023-12-15",
+                          status: "Upcoming",
+                          detail: "Election for local council positions including mayor, deputy mayor, and council members.",
+                          candidates: 12,
+                          votingHours: "9:00 AM - 6:00 PM",
+                          requiresId: true,
+                          location: "City Hall and Community Centers"
+                        }
+                      ].map((election) => (
+                        <div key={election.id} className="p-4 border border-primary/20 rounded-lg">
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <h3 className="font-semibold">{election.name}</h3>
+                              <div className="text-sm text-foreground/70 mb-2">
+                                {election.type} Election • {election.date}
+                              </div>
+                            </div>
+                            <div className={`px-2 py-1 text-xs font-medium rounded-full ${
+                              election.status === 'Active' 
+                                ? 'bg-green-100 text-green-800' 
+                                : 'bg-amber-100 text-amber-800'
+                            }`}>
+                              {election.status}
+                            </div>
+                          </div>
+                          
+                          <div className="grid md:grid-cols-2 gap-4 mt-4">
+                            <div className="space-y-3">
+                              <div>
+                                <div className="text-sm font-medium mb-1 flex items-center gap-1">
+                                  <Info className="h-3 w-3" />
+                                  Description
+                                </div>
+                                <div className="text-sm">{election.detail}</div>
+                              </div>
+                              <div>
+                                <div className="text-sm font-medium mb-1">Location</div>
+                                <div className="text-sm">{election.location}</div>
+                              </div>
+                            </div>
+                            
+                            <div className="space-y-3">
+                              <div>
+                                <div className="text-sm font-medium mb-1">Candidates</div>
+                                <div className="text-sm">{election.candidates} candidates</div>
+                              </div>
+                              <div>
+                                <div className="text-sm font-medium mb-1">Voting Hours</div>
+                                <div className="text-sm">{election.votingHours}</div>
+                              </div>
+                              <div>
+                                <div className="text-sm font-medium mb-1">Requirements</div>
+                                <div className="text-sm">
+                                  {election.requiresId ? "Valid ID required" : "No special requirements"}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <div className="mt-4 flex gap-3">
+                            {election.status === 'Active' ? (
+                              <>
+                                <Link to="/candidates">
+                                  <Button size="sm">View Candidates</Button>
+                                </Link>
+                                <Link to="/voting">
+                                  <Button size="sm" variant="outline">Cast Vote</Button>
+                                </Link>
+                              </>
+                            ) : (
+                              <Link to="/candidates">
+                                <Button size="sm" variant="outline">Preview Candidates</Button>
+                              </Link>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+                
+                <TabsContent value="history" className="mt-0">
+                  <VoterHistory />
+                </TabsContent>
+              </div>
+            </div>
           </div>
-          
-          {/* Voting History */}
-          <div className="mb-12">
-            <VoterHistory userId={voterDetails.voterId} />
-          </div>
-          
-          {/* Complaints */}
-          <div className="mb-12">
-            <UserComplaints userId={voterDetails.voterId} />
-          </div>
-          
-          <Card className="glass-card">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-xl font-bold">
-                {translations.upcomingElections[currentLanguage]}
-              </CardTitle>
-              <Calendar className="h-5 w-5 text-foreground/60" />
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-[200px]">
-                      {translations.electionTitle[currentLanguage]}
-                    </TableHead>
-                    <TableHead>{translations.date[currentLanguage]}</TableHead>
-                    <TableHead>{translations.location[currentLanguage]}</TableHead>
-                    <TableHead className="text-right">
-                      {translations.candidates[currentLanguage]}
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {upcomingElections.map((election) => (
-                    <TableRow key={election.id}>
-                      <TableCell className="font-medium">{election.title}</TableCell>
-                      <TableCell>{election.date}</TableCell>
-                      <TableCell>{election.location}</TableCell>
-                      <TableCell className="text-right">{election.candidates}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-          
-          <Card className="glass-card">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-xl font-bold">
-                {translations.faqs[currentLanguage]}
-              </CardTitle>
-              <HelpCircle className="h-5 w-5 text-foreground/60" />
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {faqs.map((faq, index) => (
-                <div key={index} className="space-y-2">
-                  <h3 className="text-lg font-semibold flex items-center gap-2">
-                    <HelpCircle className="h-4 w-4 text-muted-foreground" />
-                    {faq.question}
-                  </h3>
-                  <p className="text-sm text-muted-foreground">{faq.answer}</p>
-                  {index < faqs.length - 1 && <Separator />}
-                </div>
-              ))}
-            </CardContent>
-          </Card>
         </div>
       </div>
     </div>

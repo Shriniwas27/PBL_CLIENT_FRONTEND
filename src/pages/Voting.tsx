@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
@@ -23,8 +24,47 @@ import {
   ChevronLeft,
   Lock,
   XCircle,
+  MapPin,
+  Globe,
+  Calendar,
+  Flag,
 } from 'lucide-react';
 import { toast } from 'sonner';
+
+// Interface for election data
+interface Election {
+  id: number;
+  name: string;
+  type: string;
+  date: string;
+  region: string;
+  status: string;
+}
+
+// Mock elections data - in a real app, this would come from an API
+const elections: Election[] = [
+  {
+    id: 1,
+    name: "General Elections 2023",
+    type: "General",
+    date: "2023-11-30",
+    region: "North District",
+    status: "Active",
+  },
+  {
+    id: 2,
+    name: "Local Council Election 2023",
+    type: "Local",
+    date: "2023-12-15", 
+    region: "East District",
+    status: "Upcoming",
+  }
+];
+
+// Filter candidates based on region/constituency
+const getCandidatesByRegion = (candidates: any[], region: string) => {
+  return candidates.filter(candidate => candidate.constituency === region);
+};
 
 // Reusing mock candidate data from Candidates.tsx
 const candidates = [
@@ -38,6 +78,7 @@ const candidates = [
     experience: '12 years as District Representative',
     manifesto: 'Focus on sustainable development and social justice',
     imageUrl: 'https://randomuser.me/api/portraits/women/1.jpg',
+    electionId: 1,
   },
   {
     id: 2,
@@ -49,6 +90,7 @@ const candidates = [
     experience: '8 years as City Councilor, Former Business Executive',
     manifesto: 'Economic growth and traditional values',
     imageUrl: 'https://randomuser.me/api/portraits/men/2.jpg',
+    electionId: 1,
   },
   {
     id: 3,
@@ -60,6 +102,7 @@ const candidates = [
     experience: '10 years in Civil Service',
     manifesto: 'Government transparency and educational reforms',
     imageUrl: 'https://randomuser.me/api/portraits/women/3.jpg',
+    electionId: 1,
   },
   {
     id: 4,
@@ -71,6 +114,7 @@ const candidates = [
     experience: '6 years as District Council Member',
     manifesto: 'Economic innovation and social equality',
     imageUrl: 'https://randomuser.me/api/portraits/men/4.jpg',
+    electionId: 2,
   },
   // More candidates...
 ];
@@ -89,13 +133,16 @@ const Voting = () => {
   const [metamaskError, setMetamaskError] = useState<string | null>(null);
   const [transactionHash, setTransactionHash] = useState<string | null>(null);
   const [hasVotedBefore, setHasVotedBefore] = useState(false);
+  const [selectedElection, setSelectedElection] = useState<Election | null>(null);
+  const [userLocation, setUserLocation] = useState<{latitude: number, longitude: number} | null>(null);
+  const [locationAnomaly, setLocationAnomaly] = useState(false);
   
   // Mock voter information that would come from backend
   // In a real application, this would be fetched from an API
   const voterInfo = {
-    name: 'John Smith',
-    constituency: 'North District', // This would come from backend
-    voterId: 'ABC1234567',
+    name: sessionStorage.getItem('voterName') || 'John Smith',
+    constituency: sessionStorage.getItem('constituency') || 'North District',
+    voterId: sessionStorage.getItem('voterId') || 'ABC1234567',
   };
   
   // Check authentication and previous voting status on component mount
@@ -110,7 +157,7 @@ const Voting = () => {
     // Check if user has voted before (in a real app, this would come from the backend)
     const checkVotingStatus = async () => {
       // Simulate API call to check if user has voted
-      const mockHasVoted = localStorage.getItem(`voted_${voterInfo.voterId}`) === 'true';
+      const mockHasVoted = localStorage.getItem(`voted_${voterInfo.voterId}_${location.state?.electionId || 1}`) === 'true';
       setHasVotedBefore(mockHasVoted);
       
       if (mockHasVoted) {
@@ -119,13 +166,58 @@ const Voting = () => {
     };
     
     checkVotingStatus();
-  }, [navigate, voterInfo.voterId]);
+    
+    // Set the selected election
+    const electionId = location.state?.electionId || 1;
+    const election = elections.find(e => e.id === electionId);
+    
+    if (election) {
+      setSelectedElection(election);
+    }
+    
+    // Get user location
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setUserLocation({
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude
+          });
+          
+          // Simplified anomaly detection - in a real app this would be more sophisticated
+          // For demo we'll randomly set an anomaly 20% of the time
+          if (Math.random() < 0.2) {
+            setLocationAnomaly(true);
+            
+            // Log the anomaly - in a real app this would be sent to a backend
+            console.log("Location anomaly detected", {
+              userId: voterInfo.voterId,
+              timestamp: new Date().toISOString(),
+              location: {
+                latitude: position.coords.latitude,
+                longitude: position.coords.longitude
+              }
+            });
+          }
+        },
+        (error) => {
+          console.error("Error getting location:", error);
+        }
+      );
+    }
+  }, [navigate, voterInfo.voterId, location.state]);
   
   // Get candidate information based on ID
   const selectedCandidate = candidates.find(c => c.id === selectedCandidateId);
   
   // Check if candidate belongs to voter's constituency
   const isSameConstituency = selectedCandidate?.constituency === voterInfo.constituency;
+  
+  // Check if candidate belongs to selected election
+  const isInElection = selectedCandidate?.electionId === selectedElection?.id;
+  
+  // Combined validation
+  const canVoteForCandidate = isSameConstituency && isInElection;
   
   // Time limit for voting: 2 minutes (120 seconds)
   const votingTimeLimit = 120;
@@ -170,7 +262,7 @@ const Voting = () => {
       const transactionParameters = {
         from: account,
         to: '0x0000000000000000000000000000000000000000', // Replace with actual contract address
-        data: `0x${Buffer.from(`Vote for candidate ${selectedCandidateId} from ${voterInfo.voterId}`).toString('hex')}`,
+        data: `0x${Buffer.from(`Vote for candidate ${selectedCandidateId} from ${voterInfo.voterId} in election ${selectedElection?.name}`).toString('hex')}`,
         gas: '0x76c0', // 30400
       };
       
@@ -204,12 +296,12 @@ const Voting = () => {
         setIsVotingComplete(true);
         
         // Store voting record in local storage (in a real app, this would be on the blockchain)
-        localStorage.setItem(`voted_${voterInfo.voterId}`, 'true');
+        localStorage.setItem(`voted_${voterInfo.voterId}_${selectedElection?.id}`, 'true');
         
         // Store voting details for history
         const votingRecord = {
-          electionId: 1,
-          electionName: 'General Elections 2023',
+          electionId: selectedElection?.id,
+          electionName: selectedElection?.name,
           votedDate: new Date().toISOString(),
           candidateName: selectedCandidate?.name,
           party: selectedCandidate?.party,
@@ -264,8 +356,8 @@ const Voting = () => {
                   
                   <h2 className="text-2xl font-bold mb-2">You Have Already Voted</h2>
                   <p className="text-foreground/70 mb-6">
-                    Our records show that you have already cast your vote in this election.
-                    Each voter is allowed to vote only once.
+                    Our records show that you have already cast your vote in {selectedElection?.name}.
+                    Each voter is allowed to vote only once per election.
                   </p>
                   
                   <div className="flex gap-4 justify-center">
@@ -305,7 +397,7 @@ const Voting = () => {
           
           <div className="text-center max-w-2xl mx-auto mb-8 stagger-animation">
             <div className="inline-block px-3 py-1 mb-4 text-sm font-medium rounded-full bg-primary/10 text-primary">
-              Secure Voting Interface
+              {selectedElection?.name || "Election"}
             </div>
             <h1 className="text-3xl md:text-4xl font-bold mb-4">Cast Your Vote</h1>
             <p className="text-lg text-foreground/80">
@@ -313,16 +405,49 @@ const Voting = () => {
             </p>
           </div>
           
-          {/* Voter Constituency Info */}
-          <div className="max-w-3xl mx-auto mb-4">
-            <div className="bg-primary/5 rounded-lg p-4 flex items-center gap-3">
-              <ShieldCheck className="h-5 w-5 text-primary" />
-              <div>
-                <p className="text-sm font-medium">You are registered to vote in:</p>
-                <p className="font-semibold">{voterInfo.constituency}</p>
+          {/* Election and Voter Info */}
+          <div className="max-w-3xl mx-auto mb-6">
+            <div className="grid md:grid-cols-2 gap-4">
+              <div className="bg-primary/5 rounded-lg p-4 flex items-center gap-3">
+                <Flag className="h-5 w-5 text-primary" />
+                <div>
+                  <p className="text-sm font-medium">Participating in:</p>
+                  <p className="font-semibold">{selectedElection?.name}</p>
+                  <p className="text-xs text-foreground/70">
+                    <Calendar className="h-3 w-3 inline mr-1" />
+                    {selectedElection?.date}
+                  </p>
+                </div>
+              </div>
+              
+              <div className="bg-primary/5 rounded-lg p-4 flex items-center gap-3">
+                <ShieldCheck className="h-5 w-5 text-primary" />
+                <div>
+                  <p className="text-sm font-medium">You are registered to vote in:</p>
+                  <p className="font-semibold">{voterInfo.constituency}</p>
+                  <p className="text-xs text-foreground/70">
+                    <Globe className="h-3 w-3 inline mr-1" />
+                    {selectedElection?.region}
+                  </p>
+                </div>
               </div>
             </div>
           </div>
+          
+          {locationAnomaly && (
+            <div className="max-w-3xl mx-auto mb-6">
+              <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg flex items-start gap-3">
+                <AlertTriangle className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-medium text-amber-800">Location Anomaly Detected</p>
+                  <p className="text-sm text-amber-700">
+                    Your current location appears to be different from your expected voting area. 
+                    This has been logged for security purposes but will not affect your ability to vote.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
           
           {!isVotingComplete ? (
             <div className="max-w-3xl mx-auto">
@@ -371,16 +496,25 @@ const Voting = () => {
                             <div>{selectedCandidate.manifesto}</div>
                           </div>
                           
-                          {!isSameConstituency && (
+                          {!canVoteForCandidate && (
                             <div className="p-3 bg-destructive/10 rounded-lg border border-destructive/20 text-sm flex items-start gap-2 mb-6">
                               <XCircle className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" />
                               <div>
-                                <strong>Constituency Mismatch:</strong> You can only vote for candidates in your registered constituency ({voterInfo.constituency}).
+                                {!isSameConstituency && (
+                                  <div>
+                                    <strong>Constituency Mismatch:</strong> You can only vote for candidates in your registered constituency ({voterInfo.constituency}).
+                                  </div>
+                                )}
+                                {!isInElection && (
+                                  <div className="mt-1">
+                                    <strong>Election Mismatch:</strong> This candidate is not participating in the current election.
+                                  </div>
+                                )}
                               </div>
                             </div>
                           )}
                           
-                          {isSameConstituency && (
+                          {canVoteForCandidate && (
                             <div className="p-3 bg-primary/10 rounded-lg border border-primary/20 text-sm flex items-start gap-2 mb-6">
                               <ShieldCheck className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
                               <div>
@@ -401,7 +535,7 @@ const Voting = () => {
                             size="lg"
                             className="w-full"
                             onClick={handleVote}
-                            disabled={isVoting || !isSameConstituency || !hasMetaMask}
+                            disabled={isVoting || !canVoteForCandidate || !hasMetaMask}
                           >
                             {isVoting ? (
                               <>
@@ -413,10 +547,10 @@ const Voting = () => {
                                 <Lock className="mr-2 h-4 w-4" />
                                 MetaMask Required to Vote
                               </>
-                            ) : !isSameConstituency ? (
+                            ) : !canVoteForCandidate ? (
                               <>
                                 <Lock className="mr-2 h-4 w-4" />
-                                Cannot Vote (Wrong Constituency)
+                                Cannot Vote (Eligibility Issue)
                               </>
                             ) : (
                               <>
@@ -469,7 +603,7 @@ const Voting = () => {
                   
                   <h2 className="text-2xl font-bold mb-2">Vote Successfully Recorded</h2>
                   <p className="text-foreground/70 mb-6">
-                    Your vote has been securely recorded on the blockchain.
+                    Your vote has been securely recorded on the blockchain for {selectedElection?.name}.
                     Thank you for participating in the democratic process.
                   </p>
                   
@@ -501,8 +635,9 @@ const Voting = () => {
           <AlertDialogHeader>
             <AlertDialogTitle>Confirm Your Vote</AlertDialogTitle>
             <AlertDialogDescription>
-              You are about to cast your vote for <strong>{selectedCandidate?.name}</strong> of the <strong>{selectedCandidate?.party}</strong>.
-              This action cannot be undone once confirmed. Your vote will be signed using MetaMask.
+              You are about to cast your vote for <strong>{selectedCandidate?.name}</strong> of the <strong>{selectedCandidate?.party}</strong> 
+              in the <strong>{selectedElection?.name}</strong>. This action cannot be undone once confirmed. 
+              Your vote will be signed using MetaMask.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

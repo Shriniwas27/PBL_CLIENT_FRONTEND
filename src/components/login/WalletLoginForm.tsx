@@ -73,17 +73,6 @@ const WalletLoginForm = () => {
     }
   };
   
-  const handleAccountsChanged = (accounts: string[]) => {
-    if (accounts.length === 0) {
-      // User disconnected their wallet
-      setWalletConnected(false);
-      setWalletAddress('');
-      toast.error('Wallet disconnected');
-    } else {
-      setWalletAddress(formatAddress(accounts[0]));
-    }
-  };
-
   const formatAddress = (address: string) => {
     return address.slice(0, 6) + '...' + address.slice(-4);
   };
@@ -118,6 +107,11 @@ const WalletLoginForm = () => {
     // Simulate wallet authentication with signature
     setIsVerifying(true);
     
+    // Store user wallet address in sessionStorage for use in voting
+    if (window.ethereum && window.ethereum.selectedAddress) {
+      sessionStorage.setItem('walletAddress', window.ethereum.selectedAddress);
+    }
+    
     setTimeout(() => {
       setIsVerifying(false);
       toast.success('Authentication successful');
@@ -133,7 +127,7 @@ const WalletLoginForm = () => {
           <AlertCircle className="h-4 w-4 text-amber-600" />
           <AlertTitle>MetaMask Required</AlertTitle>
           <AlertDescription>
-            You need to install the MetaMask browser extension to use this login method.
+            You need to install the MetaMask browser extension to use this login method and to sign your votes.
           </AlertDescription>
         </Alert>
         
@@ -154,7 +148,7 @@ const WalletLoginForm = () => {
         <Wallet className="h-12 w-12 text-primary/60 mx-auto mb-4" />
         <h3 className="text-lg font-medium mb-2">Connect Your Wallet</h3>
         <p className="text-sm text-foreground/70 mb-4">
-          You'll need MetaMask wallet to authenticate and sign your vote transactions securely.
+          You'll need MetaMask wallet to authenticate and sign your vote transactions securely on the blockchain.
         </p>
         
         {errorMessage && (

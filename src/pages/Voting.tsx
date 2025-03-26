@@ -23,6 +23,7 @@ import {
   RotateCw,
   ChevronLeft,
   Lock,
+  XCircle,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -50,6 +51,28 @@ const candidates = [
     manifesto: 'Economic growth and traditional values',
     imageUrl: 'https://randomuser.me/api/portraits/men/2.jpg',
   },
+  {
+    id: 3,
+    name: 'Sarah Chen',
+    party: 'Democratic Reform',
+    constituency: 'East District',
+    age: 38,
+    education: 'Master of Public Administration',
+    experience: '10 years in Civil Service',
+    manifesto: 'Government transparency and educational reforms',
+    imageUrl: 'https://randomuser.me/api/portraits/women/3.jpg',
+  },
+  {
+    id: 4,
+    name: 'James Wilson',
+    party: 'Liberal Democrats',
+    constituency: 'South District',
+    age: 41,
+    education: 'Bachelor of Economics',
+    experience: '6 years as District Council Member',
+    manifesto: 'Economic innovation and social equality',
+    imageUrl: 'https://randomuser.me/api/portraits/men/4.jpg',
+  },
   // More candidates...
 ];
 
@@ -64,29 +87,98 @@ const Voting = () => {
     location.state?.candidateId || null
   );
   const [votingStep, setVotingStep] = useState(0);
+  const [metamaskError, setMetamaskError] = useState<string | null>(null);
+  const [transactionHash, setTransactionHash] = useState<string | null>(null);
+  
+  // Mock voter information that would come from backend
+  // In a real application, this would be fetched from an API
+  const voterInfo = {
+    name: 'John Smith',
+    constituency: 'North District', // This would come from backend
+    voterId: 'ABC1234567',
+  };
   
   // Get candidate information based on ID
   const selectedCandidate = candidates.find(c => c.id === selectedCandidateId);
   
+  // Check if candidate belongs to voter's constituency
+  const isSameConstituency = selectedCandidate?.constituency === voterInfo.constituency;
+  
   // Time limit for voting: 2 minutes (120 seconds)
   const votingTimeLimit = 120;
+  
+  // Check if MetaMask is installed
+  const [hasMetaMask, setHasMetaMask] = useState(false);
+  
+  useEffect(() => {
+    // Check if MetaMask is installed
+    if (window.ethereum?.isMetaMask) {
+      setHasMetaMask(true);
+    }
+  }, []);
   
   // Handle timeout when voting period ends
   const handleTimeout = () => {
     setIsTimeoutOpen(true);
   };
   
+  // Handle MetaMask transaction signing
+  const signTransaction = async () => {
+    setMetamaskError(null);
+    
+    if (!window.ethereum) {
+      setMetamaskError('MetaMask is not installed. Please install MetaMask to vote.');
+      return false;
+    }
+    
+    try {
+      // Request account access
+      const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+      const account = accounts[0];
+      
+      // Simulating a transaction to be signed
+      // In a real application, this would be a call to a smart contract
+      const transactionParameters = {
+        from: account,
+        to: '0x0000000000000000000000000000000000000000', // Replace with actual contract address
+        data: `0x${Buffer.from(`Vote for candidate ${selectedCandidateId} from ${voterInfo.voterId}`).toString('hex')}`,
+        gas: '0x76c0', // 30400
+      };
+      
+      // Sign the transaction
+      const txHash = await window.ethereum.request({
+        method: 'eth_sendTransaction',
+        params: [transactionParameters],
+      });
+      
+      setTransactionHash(txHash);
+      return true;
+    } catch (error: any) {
+      console.error('Error signing transaction:', error);
+      setMetamaskError(error.message || 'Failed to sign transaction with MetaMask');
+      return false;
+    }
+  };
+  
   // Handle confirm vote action
-  const handleConfirmVote = () => {
+  const handleConfirmVote = async () => {
     setIsConfirmOpen(false);
     setIsVoting(true);
     
-    // Simulate blockchain transaction
-    setTimeout(() => {
+    // Sign the transaction with MetaMask
+    const success = await signTransaction();
+    
+    if (success) {
+      // Simulate blockchain transaction processing
+      setTimeout(() => {
+        setIsVoting(false);
+        setIsVotingComplete(true);
+        toast.success('Your vote has been recorded successfully on the blockchain!');
+      }, 3000);
+    } else {
       setIsVoting(false);
-      setIsVotingComplete(true);
-      toast.success('Your vote has been recorded successfully on the blockchain!');
-    }, 3000);
+      toast.error('Failed to record your vote. Please try again.');
+    }
   };
   
   // Handle voting flow steps
@@ -123,6 +215,17 @@ const Voting = () => {
             <p className="text-lg text-foreground/80">
               You have 2 minutes to complete your vote. Please verify your choice carefully.
             </p>
+          </div>
+          
+          {/* Voter Constituency Info */}
+          <div className="max-w-3xl mx-auto mb-4">
+            <div className="bg-primary/5 rounded-lg p-4 flex items-center gap-3">
+              <ShieldCheck className="h-5 w-5 text-primary" />
+              <div>
+                <p className="text-sm font-medium">You are registered to vote in:</p>
+                <p className="font-semibold">{voterInfo.constituency}</p>
+              </div>
+            </div>
           </div>
           
           {!isVotingComplete ? (
@@ -172,24 +275,52 @@ const Voting = () => {
                             <div>{selectedCandidate.manifesto}</div>
                           </div>
                           
-                          <div className="p-3 bg-primary/10 rounded-lg border border-primary/20 text-sm flex items-start gap-2 mb-6">
-                            <ShieldCheck className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
-                            <div>
-                              <strong>Secure Voting:</strong> Your vote will be securely recorded on the blockchain.
-                              The record will be anonymous but verifiable.
+                          {!isSameConstituency && (
+                            <div className="p-3 bg-destructive/10 rounded-lg border border-destructive/20 text-sm flex items-start gap-2 mb-6">
+                              <XCircle className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" />
+                              <div>
+                                <strong>Constituency Mismatch:</strong> You can only vote for candidates in your registered constituency ({voterInfo.constituency}).
+                              </div>
                             </div>
-                          </div>
+                          )}
+                          
+                          {isSameConstituency && (
+                            <div className="p-3 bg-primary/10 rounded-lg border border-primary/20 text-sm flex items-start gap-2 mb-6">
+                              <ShieldCheck className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+                              <div>
+                                <strong>Secure Voting:</strong> Your vote will be securely recorded on the blockchain using MetaMask.
+                                The record will be anonymous but verifiable.
+                              </div>
+                            </div>
+                          )}
+                          
+                          {metamaskError && (
+                            <div className="p-3 bg-destructive/10 rounded-lg border border-destructive/20 text-sm mb-6">
+                              <p className="font-medium text-destructive mb-1">MetaMask Error</p>
+                              <p>{metamaskError}</p>
+                            </div>
+                          )}
                           
                           <Button 
                             size="lg"
                             className="w-full"
                             onClick={handleVote}
-                            disabled={isVoting}
+                            disabled={isVoting || !isSameConstituency || !hasMetaMask}
                           >
                             {isVoting ? (
                               <>
                                 <RotateCw className="mr-2 h-4 w-4 animate-spin" />
                                 Recording Your Vote...
+                              </>
+                            ) : !hasMetaMask ? (
+                              <>
+                                <Lock className="mr-2 h-4 w-4" />
+                                MetaMask Required to Vote
+                              </>
+                            ) : !isSameConstituency ? (
+                              <>
+                                <Lock className="mr-2 h-4 w-4" />
+                                Cannot Vote (Wrong Constituency)
                               </>
                             ) : (
                               <>
@@ -198,6 +329,19 @@ const Voting = () => {
                               </>
                             )}
                           </Button>
+                          
+                          {!hasMetaMask && (
+                            <div className="mt-3 text-center">
+                              <a 
+                                href="https://metamask.io/download/" 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="text-sm text-primary underline"
+                              >
+                                Install MetaMask to vote
+                              </a>
+                            </div>
+                          )}
                         </div>
                       </>
                     ) : (
@@ -236,7 +380,7 @@ const Voting = () => {
                   <div className="bg-background/50 p-4 rounded-lg mb-6">
                     <div className="text-sm font-medium mb-2">Transaction Details</div>
                     <div className="font-mono text-xs bg-foreground/5 p-2 rounded overflow-x-auto">
-                      0x7a3b5c21d8e9f456a7b3c2d1e0f9b8a7c6d5e4f3a2b1c0d9e8f7a6b5c4d3e2f1
+                      {transactionHash || '0x7a3b5c21d8e9f456a7b3c2d1e0f9b8a7c6d5e4f3a2b1c0d9e8f7a6b5c4d3e2f1'}
                     </div>
                   </div>
                   
@@ -262,13 +406,13 @@ const Voting = () => {
             <AlertDialogTitle>Confirm Your Vote</AlertDialogTitle>
             <AlertDialogDescription>
               You are about to cast your vote for <strong>{selectedCandidate?.name}</strong> of the <strong>{selectedCandidate?.party}</strong>.
-              This action cannot be undone once confirmed.
+              This action cannot be undone once confirmed. Your vote will be signed using MetaMask.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={handleConfirmVote}>
-              Confirm Vote
+              Sign & Confirm Vote
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
